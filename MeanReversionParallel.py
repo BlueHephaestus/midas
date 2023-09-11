@@ -2,12 +2,13 @@
 Improved from original static GA model to try a rolling model, that will predict at a given timestep t
     by taking in a window of data up to t-1.
 """
-import numpy as np
-import matplotlib.pyplot as plt
-from tqdm import tqdm
-#random.seed(42)
-
 from multiprocessing import Pool
+
+import numpy as np
+from tqdm import tqdm
+
+
+# random.seed(42)
 
 
 def act(action, price, shares, wallet, trade_fee):
@@ -56,8 +57,8 @@ stock_n, n = data.shape
 
 # Get moving day averages
 # periods = [90]
-#stock_n = 1000
-stock_n = 5000
+stock_n = 1000
+# stock_n = 5000
 
 INITIAL_SHARES = 0
 INITIAL_WALLET = 100
@@ -67,20 +68,22 @@ train_n = int(n * .66)
 
 import itertools
 
-# periods = 30,60,90,120,150,180,210,240
+periods = 30,60,90,120,150,180,210,240
 # periods = 60,120
 periods = 60,
-# cooldown_types = ["buy", "sell", "both"]
-cooldown_types = ["buy"]
+cooldown_types = ["buy", "sell", "both"]
+# cooldown_types = ["buy"]
+cooldowns = [1,2,4,8]
 # cooldowns = [0,1,2,3,4]
 # cooldowns = [4,5,6]
-cooldowns = [4,]
+# cooldowns = [4,]
 # std_multipliers = [0.5,1,1.5,2,2.5,3,3.5,4]
+std_multipliers = [0,1,2,3,4]
 # std_multipliers = [0,0.25,0.5,0.75,1.0]
 # std_multipliers = [0,0.25,0.5,0.75]
-std_multipliers = [0,]
-# early_cashouts = [False, True]
-early_cashouts = [False]
+# std_multipliers = [0,]
+early_cashouts = [False, True]
+# early_cashouts = [False]
 
 # Precompute all the averages and stds
 avgs = np.zeros((len(periods), stock_n, n))
@@ -88,11 +91,9 @@ stds = np.zeros((len(periods), stock_n, n))
 
 print("Precomputing Period Averages and Stds")
 for period_i, period in enumerate(tqdm(periods)):
-    for stock_i in range(stock_n):
-        for i in range(period, n):
-            avgs[period_i, stock_i, i] = np.mean(data[stock_i, i - period:i])
-            stds[period_i, stock_i, i] = np.std(data[stock_i, i - period:i])
-
+    for i in range(period, n):
+        avgs[period_i, :, i] = np.mean(data[:stock_n, i-period:i], axis=1)
+        stds[period_i, :, i] = np.std(data[:stock_n, i-period:i], axis=1)
 print("Precomputing Complete")
 
 #for period in periods:
@@ -166,7 +167,7 @@ def grid_search_function(args):
             # get net worth now that sim is complete
             #if price != data[stock_i,-1]: import sys; print("ASDFASDFAASDF");sys.exit()
             #scores[stock_i] = get_net_worth(shares, wallet, data[stock_i,-1], trade_fee)
-            if net_worth > 10**6:
+            if net_worth > 10 * INITIAL_WALLET:
                 net_worth = INITIAL_WALLET
             scores[stock_i] = net_worth - INITIAL_WALLET
             #scores[stock_i] = get_net_worth(shares, wallet, price, trade_fee)
