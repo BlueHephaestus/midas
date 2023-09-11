@@ -166,6 +166,8 @@ def grid_search_function(args):
             # get net worth now that sim is complete
             #if price != data[stock_i,-1]: import sys; print("ASDFASDFAASDF");sys.exit()
             #scores[stock_i] = get_net_worth(shares, wallet, data[stock_i,-1], trade_fee)
+            if net_worth > 10**6:
+                net_worth = INITIAL_WALLET
             scores[stock_i] = net_worth - INITIAL_WALLET
             #scores[stock_i] = get_net_worth(shares, wallet, price, trade_fee)
 
